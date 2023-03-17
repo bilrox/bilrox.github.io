@@ -1,60 +1,72 @@
-let movieNameRef = document.getElementById("movie-name");
-let searchBtn = document.getElementById("search-btn");
-let result = document.getElementById("result");
+const container = document.querySelector(".container");
+const search = document.querySelector(".search-box button");
+const weatherBox = document.querySelector(".weather-box");
+const weatherDetails = document.querySelector(".weather-details");
+const error404 = document.querySelector(".not-found");
 
-//fonction pour retirer les datas de l'api
+search.addEventListener("click", () => {
+    const APIKey = "7fbc63567c90e070c7528df56d9c6d55";
+    const city = document.querySelector(".search-box input").value;
 
-let getMovie = () => {
-    let movieName = movieNameRef.value;
-    let url = `http://www.omdbapi.com/?t=${movieName}&apikey=${key}`;
-    //if input is empty
+    if (city === "") return;
 
-    if (movieName.length <= 0) {
-        result.innerHTML = `<h3 class="msg">Please enter a movie name </h3>`;
-    }
+    fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${APIKey}`
+        )
+        .then((response) => response.json())
+        .then((json) => {
+            if (json.cod === "404") {
+                container.style.height = "400px";
+                weatherBox.style.display = "none";
+                weatherDetails.style.display = "none";
+                error404.style.display = "block";
+                error404.classList.add("fadeIn");
+                return;
+            }
 
-    //if input isn't empty
-    else {
-        fetch(url).then((resp) => resp.json()).then((data) => {
-                //if movie exist in database
-                if (data.Response == "True") {
-                    result.innerHTML = `
-                    <div class="info">
-                        <img src=${data.Poster} class="poster">
-                        <div>
-                            <h2>${data.Title}</h2>
-                            <div class="rating">
-                                <img src="star-icon.svg">
-                                <h4>${data.imdbRating}</h4>
-                            </div>
-                            <div class="details">
-                                <span>${data.Rated}</span>
-                                <span>${data.Year}</span>
-                                <span>${data.Runtime}</span>
-                            </div>
-                            <div class="genre">
-                                <div>${data.Genre.split(",").join("</div><div>")}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <h3>Plot:</h3>
-                    <p>${data.Plot}</p>
-                    <h3>Cast:</h3>
-                    <p>${data.Actors}</p>
-                `;
-                }
+            error404.style.display = "none";
+            error404.classList.remove("fadeIn");
 
-                //if movie doesn't exist in database
-                else {
-                    result.innerHTML = `<h3 class="msg">${data.Error}</h3>`;
-                }
-            })
-            //if error occurs
-            .catch(() => {
-                result.innerHTML = `<h3 class="msg">Error Occured</h3>`;
-            });
-    }
-};
+            const image = document.querySelector(".weather-box img");
+            const temperature = document.querySelector(".weather-box .temperature");
+            const description = document.querySelector(".weather-box .description");
+            const humidity = document.querySelector(".weather-details .humidity span");
+            const wind = document.querySelector(".weather-details .wind span");
 
-searchBtn.addEventListener("click", getMovie);
-window.addEventListener("load", getMovie);
+            switch (json.weather[0].main) {
+                case "Clear":
+                    image.src = "images/clear.png";
+                    break;
+
+                case "Rain":
+                    image.src = "images/rain.png";
+                    break;
+
+                case "Snow":
+                    image.src = "images/snow.png";
+                    break;
+
+                case "Clouds":
+                    image.src = "images/cloud.png";
+                    break;
+
+                case "Haze":
+                    image.src = "images/mist.png";
+                    break;
+
+                default:
+                    image.src = "";
+            }
+
+            temperature.innerHTML = `${parseInt(json.main.temp)}<span>°C</span>`;
+            description.innerHTML = `${json.weather[0].description}`;
+            humidity.innerHTML = `${json.main.humidity}%`;
+            wind.innerHTML = `${parseInt(json.wind.speed)}Km/h`;
+
+            weatherBox.style.display = "";
+            weatherDetails.style.display = "";
+            weatherBox.classList.add("fadeIn");
+            weatherDetails.classList.add("fadeIn");
+            container.style.height = "590px";
+        });
+});
